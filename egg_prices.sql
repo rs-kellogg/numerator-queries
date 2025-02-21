@@ -1,5 +1,5 @@
 WITH items AS (
-  SELECT item_id
+  SELECT item_id, batch_date
   FROM `standard_nmr_feed_item_table`
   WHERE majorcat_id = 'isc_gro_dai_eggs'
   AND category_id = 'isc_gro_dai_egg_cage_free'
@@ -12,11 +12,11 @@ WITH items AS (
   ON items.item_id = trans.item_id
   AND items.batch_date = trans.batch_date
   WHERE (
-    batch_date = '2024-05-13' AND
+    items.batch_date = '2024-05-13' AND
     EXTRACT(YEAR from DATE(trans.transaction_date)) < 2024
   ) OR
   (
-    batch_date = '2024-10-21' AND
+    items.batch_date = '2024-10-21' AND
     EXTRACT(Year FROM DATE(trans.transaction_date)) >= 2024
   )
 )
