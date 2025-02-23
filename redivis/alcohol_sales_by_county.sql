@@ -17,21 +17,35 @@ SELECT
   MAX(ST_BOUNDINGBOX(county_borders)[OFFSET(2)]) AS long_max,
   MAX(ST_BOUNDINGBOX(county_borders)[OFFSET(3)]) AS lat_max
   FROM poly
+), item_batch AS (
+  SELECT 
+    item_id, 
+    MAX(DATE(batch_date)) AS latest_batch_date
+  FROM `kellogg.numerator.standard_nmr_feed_item_table`
+  GROUP BY item_id
+), trans_batch AS (
+  SELECT transaction_date, MAX(DATE(batch_date)) as latest_batch_date
+  FROM `kellogg.numerator.standard_nmr_feed_fact_table`
+  GROUP BY transaction_date
 ), sales_bbox AS (
   SELECT 
-    f.transaction_date, 
-    ST_GEOGPOINT(f.longitude, f.latitude) AS trans_geopoint, 
-    f.item_total
+    t.transaction_date, 
+    ST_GEOGPOINT(t.longitude, t.latitude) AS trans_geopoint, 
+    t.item_total
   FROM `kellogg.numerator.standard_nmr_feed_item_table` i
-  JOIN `kellogg.numerator.standard_nmr_feed_fact_table` f
-  ON i.item_id = f.item_id
-  AND i.batch_date = f.batch_date
+  JOIN `kellogg.numerator.standard_nmr_feed_fact_table` t
+  ON i.item_id = t.item_id
+  JOIN item_batch ib
+  ON i.item_id = ib.item_id
+  AND DATE(i.batch_date) = ib.latest_batch_date
+  JOIN trans_batch tb
+  ON t.transaction_date = tb.transaction_date
+  AND DATE(t.batch_date) = tb.latest_batch_date
   JOIN bbox
-  ON f.latitude BETWEEN bbox.lat_min AND bbox.lat_max
-  AND f.longitude BETWEEN bbox.long_min AND bbox.long_max
-  WHERE dept_id = 'isc_gro_bev_beer_wine_and_spirits'
-  AND i.batch_date = '2024-05-13'
-  AND EXTRACT(YEAR FROM DATE(f.transaction_date)) BETWEEN 2018 AND 2022
+  ON t.latitude BETWEEN bbox.lat_min AND bbox.lat_max
+  AND t.longitude BETWEEN bbox.long_min AND bbox.long_max
+  WHERE i.dept_id = 'isc_gro_bev_beer_wine_and_spirits'
+  AND EXTRACT(YEAR FROM DATE(t.transaction_date)) BETWEEN 2018 AND 2022
 ) SELECT 
     EXTRACT(YEAR FROM DATE(s.transaction_date)) AS trans_year,
     EXTRACT(MONTH FROM DATE(s.transaction_Date)) AS trans_month, 
