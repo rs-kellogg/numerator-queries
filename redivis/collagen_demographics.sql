@@ -6,7 +6,7 @@ WITH item_batch AS (
     item_id, 
     -- For each item, find the latest batch_date (converted to a date)
     MAX(DATE(batch_date)) AS latest_batch_date
-  FROM `standard_nmr_feed_item_table`
+  FROM standard_nmr_feed_item_table
   GROUP BY item_id
 ),
 -- Get the most recent batch date for each transaction date from the fact table
@@ -15,7 +15,7 @@ trans_batch AS (
     transaction_date, 
     -- For each transaction date, find the latest batch_date (converted to a date)
     MAX(DATE(batch_date)) AS latest_batch_date
-  FROM `standard_nmr_feed_fact_table`
+  FROM standard_nmr_feed_fact_table
   GROUP BY transaction_date
 ),
 -- Get the most recent batch date for each user from the people table
@@ -24,7 +24,7 @@ people_batch AS (
     user_id, 
     -- For each user, find the latest batch_date (converted to a date)
     MAX(DATE(batch_date)) AS latest_batch_date
-  FROM `standard_nmr_feed_people_table`
+  FROM standard_nmr_feed_people_table
   GROUP BY user_id
 )
 
@@ -33,12 +33,12 @@ SELECT
   p.gender_app_user, 
   p.age_bucket, 
   SUM(t.item_quantity) AS units_sold
-FROM `standard_nmr_feed_item_table` i
+FROM standard_nmr_feed_item_table i
 -- Join the fact table to link items with their transaction details using item_id
-JOIN `standard_nmr_feed_fact_table` t
+JOIN standard_nmr_feed_fact_table t
   ON i.item_id = t.item_id
 -- Join the people table to attach user details (like gender and age bucket) using user_id from the fact table
-JOIN `standard_nmr_feed_people_table` p
+JOIN standard_nmr_feed_people_table p
   ON p.user_id = t.user_id
 -- Join the item_batch CTE to ensure we only use the latest batch data for each item
 JOIN item_batch ib
